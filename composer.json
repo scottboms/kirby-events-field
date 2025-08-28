@@ -1,0 +1,41 @@
+{
+  "name": "scottboms/events",
+  "description": "Events Field plugin for Kirby",
+  "type": "kirby-plugin",
+  "homepage": "https://github.com/scottboms/kirby-events",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Scott Boms",
+      "email": "plugins@scottboms.com",
+      "homepage": "https://scottboms.com"
+    }
+  ],
+  "support": {
+    "docs": "https://github.com/scottboms/kirby-events/blob/main/README.md",
+    "source": "https://github.com/scottboms/kirby-events"
+  },
+  "keywords": [
+    "kirby",
+    "kirby-cms",
+    "kirby-plugin",
+    "kirby4",
+    "kirby5",
+    "kirby5-plugin",
+    "events",
+    "fields"
+  ],
+  "require": {
+    "php": ">=8.1.0",
+    "getkirby/composer-installer": "^1.1",
+  },
+  "extra": {
+    "installer-name": "kirby-events"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "allow-plugins": {
+      "getkirby/composer-installer": true
+    }
+  }
+}
