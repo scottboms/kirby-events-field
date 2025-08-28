@@ -64,6 +64,13 @@ export default {
 				details: 'Details',
 			}),
 		},
+
+		// controls summary table visibility
+		preview: {
+			type: Array,
+			default: () => []
+		},
+
 	},
 
 	data() {
@@ -126,6 +133,11 @@ export default {
 
 		// canonical order; optionals auto-removed by flags below
 		summaryOrder() {
+			if (Array.isArray(this.preview) && this.preview.length) {
+				// take only recognized keys, keep given order
+				return this.preview.filter(k => this.allowedKeys.includes(k));
+			}
+			// fallback (original behavior)
 			return [
 				'startDate',
 				'endDate',
