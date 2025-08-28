@@ -6,6 +6,9 @@
  */
 
 use Kirby\Cms\App;
+use Kirby\Content\Field;
+use Kirby\Data\Yaml;
+use Kirby\Toolkit\Obj;
 
 if (
 	version_compare(App::version() ?? '0.0.0', '4.0.1', '<') === true ||
@@ -47,6 +50,45 @@ Kirby::plugin('scottboms/events', [
 				'empty'     => fn ($value = false) => (bool)$value,
 			]
 		]
+	],
+
+	'fieldMethods' => [
+		/**
+		 * $page->event()->toEvent()
+		 * returns an obj with field instances: startDate(), endDate(), city(), etc.
+		 */
+		'toEvent' => function (Field $field) {
+			$raw = $field->value();
+			$data = is_array($raw) ? $raw : (is_string($raw) ? (Yaml::decode($raw) ?? []) : []);
+
+			$defaults = [
+				'eventName' => null,
+				'startDate' => null,
+				'endDate'   => null,
+				'city'      => null,
+				'state'     => null,
+				'country'   => null,
+				'venue'     => null,
+				'url'       => null,
+				'details'   => null,
+			];
+			$data = array_merge($defaults, $data);
+
+			foreach ($data as $k => $v) {
+				if ($v === '' || $v === []) {
+					$data[$k] = null;
+				}
+			}
+
+			// wrap everything as field instances so you can call ->toDate(), ->isNotEmpty(), etc.
+			$parent = $field->parent() ?? site();
+			$wrapped = [];
+			foreach ($data as $key => $value) {
+				$wrapped[$key] = new Field($parent, $key, $value);
+			}
+			//return as obj, so $event->startDate() returns a field
+			return new Obj($wrapped);
+		}
 	],
 
 	'info' => [

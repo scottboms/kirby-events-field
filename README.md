@@ -32,14 +32,16 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
 
 #### Field Properties
 
-| Name     | Type    | Default  | Description                                                      |
-|----------|---------|----------|------------------------------------------------------------------|
-| empty    | string  |  `null`  | The placeholder text if no information has been added            |
-| time     | boolean |  `true`  | Include time as part of date fields                              |
-| venue    | boolean |  `true`  | If `true`, the field is available in the form                    | 
-| url      | boolean |  `true`  | If `true`, the field is available in the form                    | 
-| details  | boolean |  `true`  | If `true`, the field is available in the form                    | 
-| preview  | array   |  `[ ]`   | Optional array of field names to display in the preview          | 
+| Name      | Type    | Default | Description                                                      |
+|-----------|---------|---------|------------------------------------------------------------------|
+| empty     | string  | `null`  | The placeholder text if no information has been added            |
+| time      | boolean | `true`  | Include time as part of date fields                              |
+| eventName | boolean | `true`  | If `true`, the field is available in the form                    |
+| endDate   | boolean | `true`  | If `true`, the field is available in the form                    |
+| venue     | boolean | `true`  | If `true`, the field is available in the form                    | 
+| url       | boolean | `true`  | If `true`, the field is available in the form                    | 
+| details   | boolean | `true`  | If `true`, the field is available in the form                    | 
+| preview   | array   | `[ ]`   | Optional array of field names to display in the preview          | 
 
 
 ```yml
@@ -54,7 +56,8 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
     empty: 'Add an event'
 
     # field attributes to include
-		endDate: false
+    eventName: true
+    endDate: false
     time: false
     venue: true
     url: true
@@ -62,7 +65,7 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
 
     # preview table display
     preview:
-      - name
+      - eventName
       - startDate
       - endDate
       - city
@@ -80,11 +83,11 @@ To access an event field in your templates, you can use the toEvent() method.
 
 ```php
 <?php if ($event = $page->event()->toEvent()): ?>
-<h1><a href="<?= $event->url() ?>"><?= $event->name() ?></a></h1>
+<h1><a href="<?= $event->url() ?>"><?= $event->eventName() ?></a></h1>
 
 <div class="dates">
-	<span class="start"><?= $event->startDate()->toDate('m d, Y') ?></span> –
-	<span class="end"><?= $event->endDate()->toDate('m d, Y') ?></span>
+	<span class="start"><?= $event->startDate()->toDate('M d, Y') ?></span> –
+	<span class="end"><?= $event->endDate()->toDate('M d, Y') ?></span>
 </div>
 
 <div class="location">
