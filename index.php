@@ -2,7 +2,7 @@
 
 /*
  * A custom Event field type for Kirby
- * @link https://github.com/scottboms/kirby-events
+ * @link https://github.com/scottboms/kirby-events-field
  */
 
 use Kirby\Cms\App;
@@ -38,7 +38,7 @@ Kirby::plugin('scottboms/events', [
 
 	'info' => [
 		'version'  => '1.0.0',
-		'homepage' => 'https://github.com/scottboms/kirby-events',
+		'homepage' => 'https://github.com/scottboms/kirby-events-field',
 		'license'  => 'MIT',
 		'authors'  => [[ 'name' => 'Scott Boms', 'url' => 'https://scottboms.com' ]],
 	]
