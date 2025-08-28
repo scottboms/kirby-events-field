@@ -21,17 +21,30 @@ Kirby::plugin('scottboms/events', [
 				'value' => function ($value = null) {
 					$event = Yaml::decode($value);
 					return [
+						'eventName' => null,
 						'startDate' => null,
-						'endDate' => null,
-						'city' => null,
-						'state' => null,
-						'country' => null,
-						'venue' => null,
-						'url' => null,
-						'details' => null,
+						'endDate'   => null,
+						'city'      => null,
+						'state'     => null,
+						'country'   => null,
+						'venue'     => null,
+						'url'       => null,
+						'details'   => null,
 						...$event
 					];
-				}
+				},
+				'preview' => function ($value = []) {
+					return is_array($value) ? $value : [];
+				},
+
+				// edit-drawer toggles (independent of preview)
+				'eventName' => fn ($value = true)  => (bool)$value,
+				'endDate'   => fn ($value = true)  => (bool)$value,
+				'venue'     => fn ($value = true)  => (bool)$value,
+				'url'       => fn ($value = true)  => (bool)$value,
+				'details'   => fn ($value = true)  => (bool)$value,
+				'time'      => fn ($value = true)  => (bool)$value,
+				'empty'     => fn ($value = false) => (bool)$value,
 			]
 		]
 	],

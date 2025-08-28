@@ -13,15 +13,17 @@
 					<tr v-for="row in summaryRows" :key="row.key">
 						<th data-mobile="true">{{ row.label }}</th>
 						<td data-mobile="true">
-							<template v-if="row.key === 'url' && row.value">
-							<a :href="row.value" target="_blank" rel="noopener noreferrer">{{ row.value }}</a>
-							</template>
-							<template v-else-if="row.key === 'details' && row.value">
-							<div class="k-prose" v-html="row.value"></div>
-							</template>
-							<template v-else>
-							{{ row.value || '—' }}
-							</template>
+							<div class="clip">
+								<template v-if="row.key === 'url' && row.value">
+								<a :href="row.value" target="_blank" rel="noopener noreferrer">{{ row.value }}</a>
+								</template>
+								<template v-else-if="row.key === 'details' && row.value">
+								<div class="k-prose" v-html="row.value"></div>
+								</template>
+								<template v-else>
+								{{ row.value || '—' }}
+								</template>
+							</div>
 						</td>
 					</tr>
 				</tbody>
@@ -40,9 +42,11 @@ export default {
 
 		// labels
 		empty: { type: String, default: 'No event added yet' },
-		drawerTitle: { type: String, default: 'Event Details' },
+		showEmpty: { type: Boolean, default: false },
 
 		// field visibility controls (configurable per blueprint)
+		eventName: { type: Boolean, default: true },
+		endDate: { type: Boolean, default: true },
 		venue: { type: Boolean, default: true },
 		url: { type: Boolean, default: true },
 		details: { type: Boolean, default: true },
@@ -50,10 +54,11 @@ export default {
 		// control whether the time picker is shown on k-date-field
 		time: { type: Boolean, default: true },
 
-		// optional custom labels for sub-fields
+		// labels for sub-fields
 		labels: {
 			type: Object,
 			default: () => ({
+				eventName: 'Name',
 				startDate: 'Start Date',
 				endDate: 'End Date',
 				city: 'City',
@@ -78,6 +83,7 @@ export default {
 			drawer: false,
 			saving: false,
 			form: {
+				eventName: '',
 				startDate: '',
 				endDate: '',
 				city: '',
@@ -96,6 +102,7 @@ export default {
 			() => this.value,
 			(v) => {
 				const base = {
+					eventName: "",
 					startDate: "",
 					endDate: "",
 					city: "",
@@ -119,8 +126,9 @@ export default {
 		hasContent() {
 			const v = (this.value && typeof this.value === "object") ? this.value : {};
 			const fields = [
+				this.eventName ? v.eventName : "",
 				v.startDate,
-				v.endDate,
+				this.endDate ? v.endDate : "",
 				v.city,
 				v.state,
 				v.country,
@@ -131,6 +139,11 @@ export default {
 			return fields.some(val => !!val && String(val).trim() !== "");
 		},
 
+		// handle preview keys
+		allowedKeys() {
+			return ['eventName', 'startDate','endDate','city','state','country','venue','url','details'];
+		},
+
 		// canonical order; optionals auto-removed by flags below
 		summaryOrder() {
 			if (Array.isArray(this.preview) && this.preview.length) {
@@ -139,8 +152,9 @@ export default {
 			}
 			// fallback (original behavior)
 			return [
+				...(this.eventName ? ['eventName'] : []),
 				'startDate',
-				'endDate',
+				...(this.endDate ? ['endDate'] : []),
 				'city',
 				'state',
 				'country',
@@ -151,7 +165,7 @@ export default {
 		},
 
 		summaryRows() {
-			// prefer the prop kirby gives us
+			// prefer the prop from kirby
 			const src = (this.value && typeof this.value === 'object') ? this.value : {};
 			const rows = [];
 
@@ -165,12 +179,11 @@ export default {
 
 				const isEmpty = !val || String(val).trim() === '';
 				if (!this.showEmpty && isEmpty) continue;
-				const row = {
+				rows.push({
 					key,
 					label: this.labels[key] || key,
 					value: val,
-				};
-				rows.push(row);
+				});
 	    }
 			return rows;
 		},
@@ -179,66 +192,83 @@ export default {
 
 	methods: {
 		openDrawer() {
-			const fields = {
-				// dates
-				startDate: {
-					type: 'date',
-					label: this.labels.startDate,
-					time: this.time,
-					width: '1/2'
-				},
-				endDate: {
+			const list = [];
+
+			// eventName
+			if (this.eventName) {
+				list.push(['eventName', {
+					type: 'text',
+					label: this.labels.eventName,
+					width: '1/1',
+				}]);
+			}
+
+			// dates
+			list.push(['startDate', {
+				type: 'date',
+				label: this.labels.startDate,
+				display: 'YYYY-MM-DD',
+				time: this.time,
+				width: this.endDate ? '1/2' : '1/1', // full width if no endDate
+			}]);
+
+			if (this.endDate) {
+				list.push(['endDate', {
 					type: 'date',
 					label: this.labels.endDate,
+					display: 'YYYY-MM-DD',
 					time: this.time,
 					width: '1/2'
-				},
+				}]);
+			}
 
-				// location
-				city: {
-					type: 'text',
-					label: this.labels.city,
-					width: '1/2',
-				},
-				state: {
-		      type: 'text',
-		      label: this.labels.state,
-		      width: '1/2',
-		    },
-				country: {
-					type: 'text',
-					label: this.labels.country,
-				},
-			};
+			// location
+			list.push(['city', {
+				type: 'text',
+				label: this.labels.city,
+				width: '1/3',
+			}]);
+			list.push(['state', {
+				type: 'text',
+				label: this.labels.state,
+				width: '1/3',
+			}]);
+			list.push(['country', {
+				type: 'text',
+				label: this.labels.country,
+				width: '1/3',
+			}]);
 
-			// optional fields
-			// checks if true in blueprint (e.g. venue: true)
-			if (this.venue) {
-				fields.venue = {
+			// configurable fields
+		  if (this.venue) {
+				list.push(['venue', {
 					type: 'text',
 					label: this.labels.venue,
-				};
+				}]);
 			}
 			if (this.url) {
-				fields.url = {
+				list.push(['url', {
 					type: 'url',
 					label: this.labels.url,
-				};
+				}]);
 			}
 			if (this.details) {
-				fields.details = {
+				list.push(['details', {
 					type: 'textarea',
 					label: this.labels.details,
 					buttons: false,
-					size: 'medium'
-				};
+					size: 'medium',
+				}]);
 			}
+
+			// convert to object with stable insertion order
+			const fields = Object.fromEntries(list);
 
 			this.$panel.drawer.open({
 				component: 'k-form-drawer',
 				props: {
 					icon: 'calendar',
-					title: this.drawerTitle,
+					title: 'Event Details',
 					fields,
 					value: { ...this.form },
 				},
@@ -273,8 +303,8 @@ export default {
 			});
 		},
 
-		// handle reformating date value if time is not present
-		// strip time value for preview only
+		// reformat date value if time is not present
+		// strips time value for preview only
 		formatDate(v) {
 			if (!v) return '';
 			const s = String(v);
@@ -286,6 +316,40 @@ export default {
 </script>
 
 <style>
+.k-event-field__summary table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.k-event-field__summary .k-table th {
+	/* don't wrap labels and
+	 * force to minimum intrinsic size
+	 */
+	white-space: nowrap;
+	width: 1%!important;
+}
+
+.k-event-field__summary td {
+	/* allow the field to shrink */
+	max-width: 0;
+	width: 99%;
+}
+
+.k-event-field__summary .clip {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.k-event-field__summary .clip a {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: bottom;
+}
+
 .k-event-field__summary .k-prose {
 	padding: .5rem 0;
 }
