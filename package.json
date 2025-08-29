@@ -2,7 +2,7 @@
 	"name": "scottboms/events-field",
 	"description": "Events Field for Kirby",
 	"author": "Scott Boms <plugins@scottboms.com>",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"type": "kirby-plugin",
 	"license": "MIT",
 	"scripts": {

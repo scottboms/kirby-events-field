@@ -27,8 +27,8 @@ Kirby::plugin('scottboms/events-field', [
 						'eventName'  => null,
 						'startDate'  => null,
 						'endDate'    => null,
-						'hoursStart' => null,
-						'hoursEnd'   => null,
+						'timeStart'  => null,
+						'timeEnd'    => null,
 						'city'       => null,
 						'state'      => null,
 						'country'    => null,
@@ -45,8 +45,8 @@ Kirby::plugin('scottboms/events-field', [
 				// edit-drawer toggles (independent of preview)
 				'eventName'  => fn ($value = true)  => (bool)$value,
 				'endDate'    => fn ($value = true)  => (bool)$value,
-				'hoursStart' => fn ($value = true) => (bool)$value,
-				'hoursEnd'   => fn ($value = true) => (bool)$value,
+				'timeStart'  => fn ($value = true)  => (bool)$value,
+				'timeEnd'    => fn ($value = true)  => (bool)$value,
 				'venue'      => fn ($value = true)  => (bool)$value,
 				'url'        => fn ($value = true)  => (bool)$value,
 				'details'    => fn ($value = true)  => (bool)$value,
@@ -58,7 +58,7 @@ Kirby::plugin('scottboms/events-field', [
 	'fieldMethods' => require __DIR__ . '/lib/fieldMethods.php',
 
 	'info' => [
-		'version'  => '1.1.0',
+		'version'  => '1.1.1',
 		'homepage' => 'https://github.com/scottboms/kirby-events-field',
 		'license'  => 'MIT',
 		'authors'  => [[ 'name' => 'Scott Boms', 'url' => 'https://scottboms.com' ]],

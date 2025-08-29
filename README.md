@@ -35,17 +35,18 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
 | Name       | Type    | Default | Description                                                     |
 |------------|---------|---------|-----------------------------------------------------------------|
 | empty      | string  | `null`  | The placeholder text if no information has been added           |
+| preview    | array   | `[ ]`   | Optional array of field names to display in the preview         |
 | eventName  | boolean | `true`  | If `true`, the field is available in the form                   |
 | endDate    | boolean | `true`  | If `true`, the field is available in the form                   |
-| hoursStart | boolean | `true`  | If `true`, the field is available in the form                   |
-| hoursEnd   | boolean | `true`  | If `true`, the field is available in the form                   |
-| city       | boolean | `true`  | If `true`, the field is available in the form                   | 
-| state      | boolean | `true`  | If `true`, the field is available in the form                   | 
-| country    | boolean | `true`  | If `true`, the field is available in the form                   | 
-| venue      | boolean | `true`  | If `true`, the field is available in the form                   | 
-| url        | boolean | `true`  | If `true`, the field is available in the form                   | 
-| details    | boolean | `true`  | If `true`, the field is available in the form                   | 
-| preview    | array   | `[ ]`   | Optional array of field names to display in the preview         | 
+| timeStart  | boolean | `true`  | If `true`, the field is available in the form                   |
+| timeEnd    | boolean | `true`  | If `true`, the field is available in the form                   |
+| city       | boolean | `true`  | If `true`, the field is available in the form                   |
+| state      | boolean | `true`  | If `true`, the field is available in the form                   |
+| country    | boolean | `true`  | If `true`, the field is available in the form                   |
+| venue      | boolean | `true`  | If `true`, the field is available in the form                   |
+| url        | boolean | `true`  | If `true`, the field is available in the form                   |
+| details    | boolean | `true`  | If `true`, the field is available in the form                   |
+
 
 
 ```yml
@@ -62,8 +63,8 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
     # optional field properties
     eventName: true
     endDate: true
-    hoursStart: true
-    hoursEnd: true
+    timeStart: true
+    timeEnd: true
     venue: true
     city: true
     state: true
@@ -72,14 +73,15 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
     details: true
 
     # preview table display
+		# list of available field names
     preview:
       - eventName
       - startDate
       - endDate
-      - hoursStart
-      - hoursEnd
+      - timeStart
+      - timeEnd
       - eventDates # summary of startDate, endDate
-      - eventHours # summary of hoursStart, hoursEnd
+      - eventTime # summary of timeStart, timeEnd
       - city
       - state
       - country
@@ -101,8 +103,8 @@ To access an event field in your templates, you can use the toEvent() method.
 <div class="dates">
 	<span class="start"><?= $event->startDate()->toDate('M d, Y') ?></span> –
 	<span class="end"><?= $event->endDate()->toDate('M d, Y') ?></span>, daily from
-	<span class="start"><?= $event->hoursStart()->toDate('g:i a') ?></span> – 
-	<span class="end"><?= $event->hoursEnd()->toDate('g:i a') ?></span>
+	<span class="start"><?= $event->timeStart()->toDate('g:i a') ?></span> – 
+	<span class="end"><?= $event->timeEnd()->toDate('g:i a') ?></span>
 </div>
 
 <div class="location">
@@ -119,6 +121,18 @@ To access an event field in your templates, you can use the toEvent() method.
 ### Field Methods
 
 Special Field Methods have been included to provide additional utility when utilizing the field. These include a `toEvent()` wrapper which behaves similarly to Kirby's native toStructure() method. Additionally, a `daysUntil()` method allows you to provide a simple countdown based on the field's `startDate` value.
+
+```php
+<?php if ($days = $page->sxsw()->daysUntil()): ?>
+  <?php if ($days > 0): ?>
+    <p>Event starts in <?= $days ?> days</p>
+  <?php elseif ($days === 0): ?>
+    <p>Event starts today!</p>
+  <?php else: ?>
+    <p>Started <?= abs($days) ?> days ago</p>
+  <?php endif ?>
+<?php endif ?>
+```
 
 
 ## Compatibility

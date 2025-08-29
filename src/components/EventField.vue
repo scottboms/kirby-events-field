@@ -47,8 +47,8 @@ export default {
 		// field visibility controls (configurable per blueprint)
 		eventName: { type: Boolean, default: true },
 		endDate: { type: Boolean, default: true },
-		hoursStart: { type: Boolean, default: false },
-		hoursEnd: { type: Boolean, default: false },
+		timeStart: { type: Boolean, default: false },
+		timeEnd: { type: Boolean, default: false },
 		city: { type: Boolean, default: true },
 		state: { type: Boolean, default: true },
 		country: { type: Boolean, default: true },
@@ -61,12 +61,13 @@ export default {
 			type: Object,
 			default: () => ({
 				eventName: 'Name',
+				date: 'Date',
 				startDate: 'Start Date',
 				endDate: 'End Date',
-				hoursStart: 'From',
-				hoursEnd: 'Until',
+				timeStart: 'From',
+				timeEnd: 'Until',
 				eventDates: 'Dates',
-				eventHours: 'Hours',
+				eventTime: 'Time',
 				city: 'City',
 				state: 'State/Region',
 				country: 'Country',
@@ -93,8 +94,8 @@ export default {
 				eventName: '',
 				startDate: '',
 				endDate: '',
-				hoursStart: '',
-				hoursEnd: '',
+				timeStart: '',
+				timeEnd: '',
 				city: '',
 				state: '',
 				country: '',
@@ -114,8 +115,8 @@ export default {
 					eventName: '',
 					startDate: '',
 					endDate: '',
-					hoursStart: '',
-					hoursEnd: '',
+					timeStart: '',
+					timeEnd: '',
 					city: '',
 					state: '',
 					country: '',
@@ -140,8 +141,8 @@ export default {
 				this.eventName ? v.eventName : '',
 				v.startDate,
 				this.endDate ? v.endDate : '',
-				this.hoursStart ? v.hoursStart : '',
-				this.hoursEnd ? v.hoursEnd : '',
+				this.timeStart ? v.timeStart : '',
+				this.timeEnd ? v.timeEnd : '',
 				this.city ? v.city : '',
 				this.state ? v.state : '',
 				this.country ? v.country : '',
@@ -155,23 +156,44 @@ export default {
 		// handle preview keys
 		allowedKeys() {
 			return [
-				'eventName', 'startDate','endDate','hoursStart','hoursEnd','eventDates',
-				'eventHours','city','state','country','location','venue','url','details'];
+				'eventName', 'startDate','endDate','timeStart','timeEnd','eventDates',
+				'eventTime','city','state','country','location','venue','url','details'];
 		},
 
 		// canonical order; optionals auto-removed by flags below
 		summaryOrder() {
+			const allowed = this.allowedKeys;
+
+			// if blueprint provided a preview array, normalize it
 			if (Array.isArray(this.preview) && this.preview.length) {
-				// take only recognized keys, keep given order
-				return this.preview.filter(k => this.allowedKeys.includes(k));
+				// keep only allowed keys
+				let order = this.preview.filter(k => allowed.includes(k));
+				// remove endDate if disabled
+				if (!this.endDate) {
+					order = order.filter(k => k !== 'endDate');
+				}
+
+				// if eventDates not present but start/end are, collapse them to eventDates
+				const iStart = order.indexOf('startDate');
+				const iEnd   = order.indexOf('endDate');
+				const hasEventDates = order.includes('eventDates');
+				if (!hasEventDates && (iStart !== -1 || iEnd !== -1)) {
+					const insertAt = Math.min(
+						iStart !== -1 ? iStart : Infinity,
+						iEnd   !== -1 ? iEnd   : Infinity
+					);
+					order = order.filter(k => k !== 'startDate' && k !== 'endDate');
+					order.splice(insertAt === Infinity ? order.length : insertAt, 0, 'eventDates');
+				}
+				return order;
 			}
+
 			// fallback (original behavior)
 			return [
 				...(this.eventName  ? ['eventName'] : []),
-				'startDate',
-				...(this.endDate    ? ['endDate'] : []),
-				...(this.hoursStart ? ['hoursStart'] : []),
-				...(this.hoursEnd   ? ['hoursEnd']   : []),
+				'eventDates',
+				...(this.timeStart ? ['timeStart'] : []),
+				...(this.timeEnd   ? ['timeEnd']   : []),
 				...(this.city       ? ['city'] : []),
 				...(this.state      ? ['state'] : []),
 				...(this.country    ? ['country'] : []),
@@ -189,20 +211,23 @@ export default {
 			for (const key of this.summaryOrder) {
 				const raw = src[key] ?? '';
 				let val = '';
+				let label = this.labels[key] || key;
 
 				if (key === 'eventDates') {
 					const start = this.formatPrettyDate(src.startDate || '');
-					const end   = this.formatPrettyDate(src.endDate   || '');
+					const end   = this.endDate ? this.formatPrettyDate(src.endDate || '') : '';
 					val = start && end ? `${start} – ${end}` : (start || end || '');
-				} else if (key === 'eventHours') {
-					const left  = this.formatTime(src.hoursStart || '');
-					const right = this.formatTime(src.hoursEnd   || '');
+					// decide date label dynamically
+					label = this.endDate ? this.labels.eventDates || 'Dates' : this.labels.date || 'Date';
+				} else if (key === 'eventTime') {
+					const left  = this.formatTime(src.timeStart || '');
+					const right = this.timeEnd ? this.formatTime(src.timeEnd || '') : '';
 					val = left && right ? `${left} – ${right}` : (left || right || '');
 				} else if (key === 'location') {
 					val = this.formatLocation(src.city, src.state, src.country);
 				} else if (key === 'startDate' || key === 'endDate') {
 					val = this.formatPrettyDate(raw);
-				} else if (key === 'hoursStart' || key === 'hoursEnd') {
+				} else if (key === 'timeStart' || key === 'timeEnd') {
 					val = this.formatTime(raw);
 				} else {
 					val = raw;
@@ -213,7 +238,7 @@ export default {
 
 				rows.push({
 					key,
-					label: this.labels[key] || key,
+					label,
 					value: val,
 				});
 	    }
@@ -229,14 +254,14 @@ export default {
 			// helper: map number of visible fields to kirby grid widths
 			const span = (n) => (n <= 1 ? '1/1' : n === 2 ? '1/2' : n === 3 ? '1/3' : '1/4');
 
-			// how many 'date/hour' fields are enabled?
+			// how many 'date/time' fields are enabled?
 			const slots =
 				1 + // startDate is always present
 				(this.endDate ? 1 : 0) +
-				(this.hoursStart ? 1 : 0) +
-				(this.hoursEnd ? 1 : 0);
+				(this.timeStart ? 1 : 0) +
+				(this.timeEnd ? 1 : 0);
 
-			const dateHourWidth = span(slots);
+			const dateTimeWidth = span(slots);
 
 			// eventName
 			if (this.eventName) {
@@ -254,7 +279,7 @@ export default {
 				display: 'YYYY-MM-DD',
 				time: false,
 				required: true,
-				width: dateHourWidth,
+				width: dateTimeWidth,
 			}]);
 
 			if (this.endDate) {
@@ -263,28 +288,28 @@ export default {
 					label: this.labels.endDate,
 					display: 'YYYY-MM-DD',
 					time: false,
-					width: dateHourWidth,
+					width: dateTimeWidth,
 				}]);
 			}
 
-			// hours (if separate from start/end times)
-			if (this.hoursStart) {
-				list.push(['hoursStart', {
+			// time
+			if (this.timeStart) {
+				list.push(['timeStart', {
 					type: 'time',
-					label: this.labels.hoursStart,
+					label: this.labels.timeStart,
 					display: 'hh:mm a',
 					notation: 24,
-					width: dateHourWidth,
+					width: dateTimeWidth,
 					step: 15 // 15-min steps
 				}]);
 			}
-			if (this.hoursEnd) {
-				list.push(['hoursEnd', {
+			if (this.timeEnd) {
+				list.push(['timeEnd', {
 					type: 'time',
-					label: this.labels.hoursEnd,
+					label: this.labels.timeEnd,
 					display: 'hh:mm a',
 					notation: 24,
-					width: dateHourWidth,
+					width: dateTimeWidth,
 					step: 15 // 15-min steps
 				}]);
 			}
