@@ -47,12 +47,14 @@ export default {
 		// field visibility controls (configurable per blueprint)
 		eventName: { type: Boolean, default: true },
 		endDate: { type: Boolean, default: true },
+		hoursStart: { type: Boolean, default: false },
+		hoursEnd: { type: Boolean, default: false },
+		city: { type: Boolean, default: true },
+		state: { type: Boolean, default: true },
+		country: { type: Boolean, default: true },
 		venue: { type: Boolean, default: true },
 		url: { type: Boolean, default: true },
 		details: { type: Boolean, default: true },
-
-		// control whether the time picker is shown on k-date-field
-		time: { type: Boolean, default: true },
 
 		// labels for sub-fields
 		labels: {
@@ -61,9 +63,14 @@ export default {
 				eventName: 'Name',
 				startDate: 'Start Date',
 				endDate: 'End Date',
+				hoursStart: 'From',
+				hoursEnd: 'Until',
+				eventDates: 'Dates',
+				eventHours: 'Hours',
 				city: 'City',
 				state: 'State/Region',
 				country: 'Country',
+				location: 'Location',
 				venue: 'Venue',
 				url: 'URL',
 				details: 'Details',
@@ -86,6 +93,8 @@ export default {
 				eventName: '',
 				startDate: '',
 				endDate: '',
+				hoursStart: '',
+				hoursEnd: '',
 				city: '',
 				state: '',
 				country: '',
@@ -102,17 +111,19 @@ export default {
 			() => this.value,
 			(v) => {
 				const base = {
-					eventName: "",
-					startDate: "",
-					endDate: "",
-					city: "",
-					state: "",
-					country: "",
-					venue: "",
-					url: "",
-					details: "",
+					eventName: '',
+					startDate: '',
+					endDate: '',
+					hoursStart: '',
+					hoursEnd: '',
+					city: '',
+					state: '',
+					country: '',
+					venue: '',
+					url: '',
+					details: '',
 				};
-				this.form = (v && typeof v === "object") ? { ...base, ...v } : { ...base };
+				this.form = (v && typeof v === 'object') ? { ...base, ...v } : { ...base };
 			},
 			{ immediate: true }
 		);
@@ -124,24 +135,28 @@ export default {
 		},
 
 		hasContent() {
-			const v = (this.value && typeof this.value === "object") ? this.value : {};
+			const v = (this.value && typeof this.value === 'object') ? this.value : {};
 			const fields = [
-				this.eventName ? v.eventName : "",
+				this.eventName ? v.eventName : '',
 				v.startDate,
-				this.endDate ? v.endDate : "",
-				v.city,
-				v.state,
-				v.country,
-				this.venue ? v.venue : "",
-				this.url ? v.url : "",
-				this.details ? v.details : "",
+				this.endDate ? v.endDate : '',
+				this.hoursStart ? v.hoursStart : '',
+				this.hoursEnd ? v.hoursEnd : '',
+				this.city ? v.city : '',
+				this.state ? v.state : '',
+				this.country ? v.country : '',
+				this.venue ? v.venue : '',
+				this.url ? v.url : '',
+				this.details ? v.details : '',
 			];
-			return fields.some(val => !!val && String(val).trim() !== "");
+			return fields.some(val => !!val && String(val).trim() !== '');
 		},
 
 		// handle preview keys
 		allowedKeys() {
-			return ['eventName', 'startDate','endDate','city','state','country','venue','url','details'];
+			return [
+				'eventName', 'startDate','endDate','hoursStart','hoursEnd','eventDates',
+				'eventHours','city','state','country','location','venue','url','details'];
 		},
 
 		// canonical order; optionals auto-removed by flags below
@@ -152,15 +167,17 @@ export default {
 			}
 			// fallback (original behavior)
 			return [
-				...(this.eventName ? ['eventName'] : []),
+				...(this.eventName  ? ['eventName'] : []),
 				'startDate',
-				...(this.endDate ? ['endDate'] : []),
-				'city',
-				'state',
-				'country',
-				...(this.venue   ? ['venue']   : []),
-				...(this.url     ? ['url']     : []),
-				...(this.details ? ['details'] : []),
+				...(this.endDate    ? ['endDate'] : []),
+				...(this.hoursStart ? ['hoursStart'] : []),
+				...(this.hoursEnd   ? ['hoursEnd']   : []),
+				...(this.city       ? ['city'] : []),
+				...(this.state      ? ['state'] : []),
+				...(this.country    ? ['country'] : []),
+				...(this.venue      ? ['venue']   : []),
+				...(this.url        ? ['url']     : []),
+				...(this.details    ? ['details'] : []),
 			];
 		},
 
@@ -170,15 +187,30 @@ export default {
 			const rows = [];
 
 			for (const key of this.summaryOrder) {
-				let val = src[key] ?? '';
+				const raw = src[key] ?? '';
+				let val = '';
 
-				// per-key formatting
-				if (key === 'startDate' || key === 'endDate') {
-					val = this.formatDate(val);
+				if (key === 'eventDates') {
+					const start = this.formatPrettyDate(src.startDate || '');
+					const end   = this.formatPrettyDate(src.endDate   || '');
+					val = start && end ? `${start} – ${end}` : (start || end || '');
+				} else if (key === 'eventHours') {
+					const left  = this.formatTime(src.hoursStart || '');
+					const right = this.formatTime(src.hoursEnd   || '');
+					val = left && right ? `${left} – ${right}` : (left || right || '');
+				} else if (key === 'location') {
+					val = this.formatLocation(src.city, src.state, src.country);
+				} else if (key === 'startDate' || key === 'endDate') {
+					val = this.formatPrettyDate(raw);
+				} else if (key === 'hoursStart' || key === 'hoursEnd') {
+					val = this.formatTime(raw);
+				} else {
+					val = raw;
 				}
 
 				const isEmpty = !val || String(val).trim() === '';
 				if (!this.showEmpty && isEmpty) continue;
+
 				rows.push({
 					key,
 					label: this.labels[key] || key,
@@ -194,6 +226,18 @@ export default {
 		openDrawer() {
 			const list = [];
 
+			// helper: map number of visible fields to kirby grid widths
+			const span = (n) => (n <= 1 ? '1/1' : n === 2 ? '1/2' : n === 3 ? '1/3' : '1/4');
+
+			// how many 'date/hour' fields are enabled?
+			const slots =
+				1 + // startDate is always present
+				(this.endDate ? 1 : 0) +
+				(this.hoursStart ? 1 : 0) +
+				(this.hoursEnd ? 1 : 0);
+
+			const dateHourWidth = span(slots);
+
 			// eventName
 			if (this.eventName) {
 				list.push(['eventName', {
@@ -206,10 +250,11 @@ export default {
 			// dates
 			list.push(['startDate', {
 				type: 'date',
-				label: this.labels.startDate,
+				label: this.endDate ? this.labels.startDate : 'Date',
 				display: 'YYYY-MM-DD',
-				time: this.time,
-				width: this.endDate ? '1/2' : '1/1', // full width if no endDate
+				time: false,
+				required: true,
+				width: dateHourWidth,
 			}]);
 
 			if (this.endDate) {
@@ -217,35 +262,63 @@ export default {
 					type: 'date',
 					label: this.labels.endDate,
 					display: 'YYYY-MM-DD',
-					time: this.time,
-					width: '1/2'
+					time: false,
+					width: dateHourWidth,
+				}]);
+			}
+
+			// hours (if separate from start/end times)
+			if (this.hoursStart) {
+				list.push(['hoursStart', {
+					type: 'time',
+					label: this.labels.hoursStart,
+					display: 'hh:mm a',
+					notation: 24,
+					width: dateHourWidth,
+					step: 15 // 15-min steps
+				}]);
+			}
+			if (this.hoursEnd) {
+				list.push(['hoursEnd', {
+					type: 'time',
+					label: this.labels.hoursEnd,
+					display: 'hh:mm a',
+					notation: 24,
+					width: dateHourWidth,
+					step: 15 // 15-min steps
 				}]);
 			}
 
 			// location
-			list.push(['city', {
-				type: 'text',
-				label: this.labels.city,
-				width: '1/3',
-			}]);
-			list.push(['state', {
-				type: 'text',
-				label: this.labels.state,
-				width: '1/3',
-			}]);
-			list.push(['country', {
-				type: 'text',
-				label: this.labels.country,
-				width: '1/3',
-			}]);
-
-			// configurable fields
+			if (this.city) {
+				list.push(['city', {
+					type: 'text',
+					label: this.labels.city,
+					width: this.country ? '1/3' : '1/2', // half if no country
+				}]);
+			}
+			if (this.state) {
+				list.push(['state', {
+					type: 'text',
+					label: this.labels.state,
+					width: this.country ? '1/3' : '1/2', // half if no country
+				}]);
+			}
+			if (this.country) {
+				list.push(['country', {
+					type: 'text',
+					label: this.labels.country,
+					width: '1/3',
+				}]);
+			}
 		  if (this.venue) {
 				list.push(['venue', {
 					type: 'text',
 					label: this.labels.venue,
 				}]);
 			}
+
+			// miscellaneous
 			if (this.url) {
 				list.push(['url', {
 					type: 'url',
@@ -257,7 +330,7 @@ export default {
 					type: 'textarea',
 					label: this.labels.details,
 					buttons: false,
-					size: 'medium',
+					size: 'small',
 				}]);
 			}
 
@@ -307,8 +380,53 @@ export default {
 		// strips time value for preview only
 		formatDate(v) {
 			if (!v) return '';
-			const s = String(v);
-			return this.time ? s : s.split(/[ T]/)[0]; // drop time if disabled
+			const s = String(v).trim();
+			return s.split(/[ T]/)[0]; // trim time off
+		},
+
+		formatPrettyDate(v) {
+			if (!v) return '';
+			// expect "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
+			const s = String(v).trim();
+			const [datePart] = s.split(' ');
+			const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+			if (!m) return datePart || s;
+
+			const y = parseInt(m[1], 10);
+			const mo = parseInt(m[2], 10);
+			const d = parseInt(m[3], 10);
+
+			// use utc so we don't get off-by-one from local time zones
+			const dt = new Date(Date.UTC(y, mo - 1, d));
+
+			// short month, numeric day, 4-digit year
+			const fmt = new Intl.DateTimeFormat(undefined, {
+				timeZone: 'UTC',
+				month: 'short',
+				day: '2-digit', // numeric, 2-digit
+				year: 'numeric',
+			});
+			return fmt.format(dt); // e.g. "Aug 1, 2025"
+		},
+
+		formatTime(v) {
+			if (!v) return '';
+			const s = String(v).trim();
+			const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+			if (!m) return s; // unknown format -> show as-is
+			let h = parseInt(m[1], 10);
+			const min = m[2];
+			const mer = h >= 12 ? 'pm' : 'am';
+			h = h % 12;
+			if (h === 0) h = 12;
+			return `${h}:${min} ${mer}`; // e.g. 9:00 am
+		},
+
+		formatLocation(city, state, country) {
+			const parts = [city, state, country]
+				.map(v => (v == null ? '' : String(v).trim()))
+				.filter(Boolean);
+			return parts.join(', ');
 		},
 
 	}

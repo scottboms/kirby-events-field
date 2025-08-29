@@ -1,5 +1,5 @@
 {
-  "name": "scottboms/events",
+  "name": "scottboms/events-field",
   "description": "Events Field plugin for Kirby",
   "type": "kirby-plugin",
   "homepage": "https://github.com/scottboms/kirby-events-field",

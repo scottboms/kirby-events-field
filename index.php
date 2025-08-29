@@ -17,22 +17,24 @@ if (
 	throw new Exception('Events Field requires Kirby v4 or v5');
 }
 
-Kirby::plugin('scottboms/events', [
+Kirby::plugin('scottboms/events-field', [
 	'fields' => [
 		'event' => [
 			'props' => [
 				'value' => function ($value = null) {
 					$event = Yaml::decode($value);
 					return [
-						'eventName' => null,
-						'startDate' => null,
-						'endDate'   => null,
-						'city'      => null,
-						'state'     => null,
-						'country'   => null,
-						'venue'     => null,
-						'url'       => null,
-						'details'   => null,
+						'eventName'  => null,
+						'startDate'  => null,
+						'endDate'    => null,
+						'hoursStart' => null,
+						'hoursEnd'   => null,
+						'city'       => null,
+						'state'      => null,
+						'country'    => null,
+						'venue'      => null,
+						'url'        => null,
+						'details'    => null,
 						...$event
 					];
 				},
@@ -41,58 +43,22 @@ Kirby::plugin('scottboms/events', [
 				},
 
 				// edit-drawer toggles (independent of preview)
-				'eventName' => fn ($value = true)  => (bool)$value,
-				'endDate'   => fn ($value = true)  => (bool)$value,
-				'venue'     => fn ($value = true)  => (bool)$value,
-				'url'       => fn ($value = true)  => (bool)$value,
-				'details'   => fn ($value = true)  => (bool)$value,
-				'time'      => fn ($value = true)  => (bool)$value,
-				'empty'     => fn ($value = false) => (bool)$value,
+				'eventName'  => fn ($value = true)  => (bool)$value,
+				'endDate'    => fn ($value = true)  => (bool)$value,
+				'hoursStart' => fn ($value = true) => (bool)$value,
+				'hoursEnd'   => fn ($value = true) => (bool)$value,
+				'venue'      => fn ($value = true)  => (bool)$value,
+				'url'        => fn ($value = true)  => (bool)$value,
+				'details'    => fn ($value = true)  => (bool)$value,
+				'empty'      => fn ($value = false) => (bool)$value,
 			]
 		]
 	],
 
-	'fieldMethods' => [
-		/**
-		 * $page->event()->toEvent()
-		 * returns an obj with field instances: startDate(), endDate(), city(), etc.
-		 */
-		'toEvent' => function (Field $field) {
-			$raw = $field->value();
-			$data = is_array($raw) ? $raw : (is_string($raw) ? (Yaml::decode($raw) ?? []) : []);
-
-			$defaults = [
-				'eventName' => null,
-				'startDate' => null,
-				'endDate'   => null,
-				'city'      => null,
-				'state'     => null,
-				'country'   => null,
-				'venue'     => null,
-				'url'       => null,
-				'details'   => null,
-			];
-			$data = array_merge($defaults, $data);
-
-			foreach ($data as $k => $v) {
-				if ($v === '' || $v === []) {
-					$data[$k] = null;
-				}
-			}
-
-			// wrap everything as field instances so you can call ->toDate(), ->isNotEmpty(), etc.
-			$parent = $field->parent() ?? site();
-			$wrapped = [];
-			foreach ($data as $key => $value) {
-				$wrapped[$key] = new Field($parent, $key, $value);
-			}
-			//return as obj, so $event->startDate() returns a field
-			return new Obj($wrapped);
-		}
-	],
+	'fieldMethods' => require __DIR__ . '/lib/fieldMethods.php',
 
 	'info' => [
-		'version'  => '1.0.0',
+		'version'  => '1.1.0',
 		'homepage' => 'https://github.com/scottboms/kirby-events-field',
 		'license'  => 'MIT',
 		'authors'  => [[ 'name' => 'Scott Boms', 'url' => 'https://scottboms.com' ]],

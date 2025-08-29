@@ -30,18 +30,22 @@ git submodule add https://github.com/scottboms/kirby-events-field.git site/plugi
 
 In a Page blueprint, add a new field with the type `event.` Standard field attributes such as `label, required, help`, etc. can also be used to override defaults. Use `empty` to change the text displayed when the field is in an empty state.
 
-#### Field Properties
+### Field Properties
 
-| Name      | Type    | Default | Description                                                      |
-|-----------|---------|---------|------------------------------------------------------------------|
-| empty     | string  | `null`  | The placeholder text if no information has been added            |
-| time      | boolean | `true`  | Include time as part of date fields                              |
-| eventName | boolean | `true`  | If `true`, the field is available in the form                    |
-| endDate   | boolean | `true`  | If `true`, the field is available in the form                    |
-| venue     | boolean | `true`  | If `true`, the field is available in the form                    | 
-| url       | boolean | `true`  | If `true`, the field is available in the form                    | 
-| details   | boolean | `true`  | If `true`, the field is available in the form                    | 
-| preview   | array   | `[ ]`   | Optional array of field names to display in the preview          | 
+| Name       | Type    | Default | Description                                                     |
+|------------|---------|---------|-----------------------------------------------------------------|
+| empty      | string  | `null`  | The placeholder text if no information has been added           |
+| eventName  | boolean | `true`  | If `true`, the field is available in the form                   |
+| endDate    | boolean | `true`  | If `true`, the field is available in the form                   |
+| hoursStart | boolean | `true`  | If `true`, the field is available in the form                   |
+| hoursEnd   | boolean | `true`  | If `true`, the field is available in the form                   |
+| city       | boolean | `true`  | If `true`, the field is available in the form                   | 
+| state      | boolean | `true`  | If `true`, the field is available in the form                   | 
+| country    | boolean | `true`  | If `true`, the field is available in the form                   | 
+| venue      | boolean | `true`  | If `true`, the field is available in the form                   | 
+| url        | boolean | `true`  | If `true`, the field is available in the form                   | 
+| details    | boolean | `true`  | If `true`, the field is available in the form                   | 
+| preview    | array   | `[ ]`   | Optional array of field names to display in the preview         | 
 
 
 ```yml
@@ -55,11 +59,15 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
     type: event
     empty: 'Add an event'
 
-    # field attributes to include
+    # optional field properties
     eventName: true
-    endDate: false
-    time: false
+    endDate: true
+    hoursStart: true
+    hoursEnd: true
     venue: true
+    city: true
+    state: true
+    country: true
     url: true
     details: true
 
@@ -68,9 +76,14 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
       - eventName
       - startDate
       - endDate
+      - hoursStart
+      - hoursEnd
+      - eventDates # summary of startDate, endDate
+      - eventHours # summary of hoursStart, hoursEnd
       - city
       - state
       - country
+      - location # summary of city, state, country
       - venue
       - url
       - details
@@ -87,7 +100,9 @@ To access an event field in your templates, you can use the toEvent() method.
 
 <div class="dates">
 	<span class="start"><?= $event->startDate()->toDate('M d, Y') ?></span> –
-	<span class="end"><?= $event->endDate()->toDate('M d, Y') ?></span>
+	<span class="end"><?= $event->endDate()->toDate('M d, Y') ?></span>, daily from
+	<span class="start"><?= $event->hoursStart()->toDate('g:i a') ?></span> – 
+	<span class="end"><?= $event->hoursEnd()->toDate('g:i a') ?></span>
 </div>
 
 <div class="location">
@@ -100,6 +115,10 @@ To access an event field in your templates, you can use the toEvent() method.
 <div class="details"><?= $event->details() ?></div>
 <?php endif ?>
 ```
+
+### Field Methods
+
+Special Field Methods have been included to provide additional utility when utilizing the field. These include a `toEvent()` wrapper which behaves similarly to Kirby's native toStructure() method. Additionally, a `daysUntil()` method allows you to provide a simple countdown based on the field's `startDate` value.
 
 
 ## Compatibility
