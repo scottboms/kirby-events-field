@@ -73,7 +73,7 @@ In a Page blueprint, add a new field with the type `event.` Standard field attri
     details: true
 
     # preview table display
-		# list of available field names
+    # list of available field names
     preview:
       - eventName
       - startDate
