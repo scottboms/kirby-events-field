@@ -10,11 +10,11 @@ use Kirby\Content\Field;
 use Kirby\Data\Yaml;
 use Kirby\Toolkit\Obj;
 
-if (
-	version_compare(App::version() ?? '0.0.0', '5.0.0', '<') === true ||
-	version_compare(App::version() ?? '6.0.0', '7.0.0', '>=') === true
-) {
-	throw new Exception('Events Field requires Kirby v6 or v7');
+// kirby version compatibility check
+$version = App::version() ?? '0.0.0';
+
+if (version_compare($version, '6.0.0-alpha.1', '<') || version_compare($version, '8.0.0', '>=')) {
+  throw new Exception('SVG Tag requires Kirby v6');
 }
 
 Kirby::plugin('scottboms/events-field', [
@@ -22,8 +22,14 @@ Kirby::plugin('scottboms/events-field', [
 		'event' => [
 			'props' => [
 				'value' => function ($value = null) {
-					$event = Yaml::decode($value);
-					return [
+					$event = Yaml::decode($value) ?? [];
+
+					// ensure we always have an array
+					if (is_object($event)) {
+						$event = (array)$event;
+					}
+
+					$defaults = [
 						'eventName'  => null,
 						'startDate'  => null,
 						'endDate'    => null,
@@ -35,8 +41,37 @@ Kirby::plugin('scottboms/events-field', [
 						'venue'      => null,
 						'url'        => null,
 						'details'    => null,
-						...$event
 					];
+
+					$event = array_merge($defaults, is_array($event) ? $event : []);
+
+					$normalizeDate = function ($v): ?string {
+						if ($v === null || $v === '') {
+							return null;
+						}
+
+						// if yaml parsed it as a DateTime object
+						if ($v instanceof \DateTimeInterface) {
+							return $v->format('Y-m-d H:i:s');
+						}
+
+						// if it already became a unix timestamp
+						if (is_int($v) || (is_string($v) && ctype_digit($v))) {
+							return date('Y-m-d H:i:s', (int)$v);
+						}
+
+						// if it is a string like "YYYY-MM-DD HH:MM:SS"
+						if (is_string($v)) {
+							return trim($v);
+						}
+
+						return null;
+					};
+
+					$event['startDate'] = $normalizeDate($event['startDate']);
+					$event['endDate']   = $normalizeDate($event['endDate']);
+					return $event;
+
 				},
 				'preview' => function ($value = []) {
 					return is_array($value) ? $value : [];
@@ -58,7 +93,7 @@ Kirby::plugin('scottboms/events-field', [
 	'fieldMethods' => require __DIR__ . '/lib/fieldMethods.php',
 
 	'info' => [
-		'version'  => '1.1.1',
+		'version'  => '6.0.0',
 		'homepage' => 'https://github.com/scottboms/kirby-events-field',
 		'license'  => 'MIT',
 		'authors'  => [[ 'name' => 'Scott Boms', 'url' => 'https://scottboms.com' ]],

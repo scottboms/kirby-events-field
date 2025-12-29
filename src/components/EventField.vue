@@ -124,7 +124,22 @@ export default {
 					url: '',
 					details: '',
 				};
-				this.form = (v && typeof v === 'object') ? { ...base, ...v } : { ...base };
+
+				const parsed = (typeof v === 'string' && v.trim())
+					? (this.$helper?.yaml?.decode(v) ?? {})
+					: v;
+
+				const next = (parsed && typeof parsed === 'object') ? { ...base, ...parsed } : { ...base };
+
+				// date fields need YYYY-MM-DD
+				next.startDate = this.formatDate(next.startDate);
+				next.endDate   = this.formatDate(next.endDate);
+
+				// leave time values as stored for now
+				next.timeStart = next.timeStart || '';
+				next.timeEnd   = next.timeEnd || '';
+
+				this.form = next;
 			},
 			{ immediate: true }
 		);
