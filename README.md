@@ -137,8 +137,7 @@ Special Field Methods have been included to provide additional utility when util
 
 ## Compatibility
 
-* Kirby 4.x
-* Kirby 5.x
+* Kirby 6.x (Plugin version 6.x)
 
 
 ## Disclaimer

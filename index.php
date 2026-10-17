@@ -11,10 +11,10 @@ use Kirby\Data\Yaml;
 use Kirby\Toolkit\Obj;
 
 if (
-	version_compare(App::version() ?? '0.0.0', '4.0.1', '<') === true ||
-	version_compare(App::version() ?? '0.0.0', '6.0.0', '>=') === true
+	version_compare(App::version() ?? '0.0.0', '6.0.0', '<') === true ||
+	version_compare(App::version() ?? '0.0.0', '7.0.0', '>=') === true
 ) {
-	throw new Exception('Events Field requires Kirby v4 or v5');
+	throw new Exception('Events Field requires Kirby v6');
 }
 
 Kirby::plugin('scottboms/events-field', [
@@ -58,7 +58,7 @@ Kirby::plugin('scottboms/events-field', [
 	'fieldMethods' => require __DIR__ . '/lib/fieldMethods.php',
 
 	'info' => [
-		'version'  => '1.1.1',
+		'version'  => '6.0.0',
 		'homepage' => 'https://github.com/scottboms/kirby-events-field',
 		'license'  => 'MIT',
 		'authors'  => [[ 'name' => 'Scott Boms', 'url' => 'https://scottboms.com' ]],
