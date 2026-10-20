@@ -1,9 +1,17 @@
 <template>
 	<k-field
-    class="k-event-field"
+		class="k-event-field"
 		v-bind="$props"
 	>
-		<k-button slot="options" icon="edit" size="xs" variant="filled" :disabled="disabled" @click="openDrawer">Edit...</k-button>
+		<template #options>
+			<k-button
+				icon="edit"
+				size="xs"
+				variant="filled"
+				:disabled="disabled"
+				@click="openDrawer"
+			>Edit...</k-button>
+		</template>
 
 		<!--<k-code>{{ value }}</k-code>-->
 
@@ -38,10 +46,16 @@
 export default {
 	extends: 'k-field',
 	props: {
-		value: { type: [String, Object, null], default: null },
+		value: {
+		  type: [String, Object],
+		  default: null
+		},
 
 		// labels
-		empty: { type: String, default: 'No event added yet' },
+		empty: {
+		  type: String,
+		  default: 'No event added yet'
+		},
 		showEmpty: { type: Boolean, default: false },
 
 		// field visibility controls (configurable per blueprint)

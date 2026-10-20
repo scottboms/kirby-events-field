@@ -6,61 +6,32 @@
  */
 
 use Kirby\Cms\App;
-use Kirby\Content\Field;
-use Kirby\Data\Yaml;
-use Kirby\Toolkit\Obj;
+use Scottboms\Events\EventField;
+
+load([
+	'Scottboms\Events\EventField' => __DIR__ . '/fields/EventField.php',
+]);
+
+$version = App::version() ?? '0.0.0';
 
 if (
-	version_compare(App::version() ?? '0.0.0', '6.0.0', '<') === true ||
-	version_compare(App::version() ?? '0.0.0', '7.0.0', '>=') === true
+	version_compare($version, '6.0.0-beta.1', '<') ||
+	version_compare($version, '7.0.0', '>=')
 ) {
-	throw new Exception('Events Field requires Kirby v6');
+	throw new Exception('Events Field requires Kirby 6');
 }
 
-Kirby::plugin('scottboms/events-field', [
-	'fields' => [
-		'event' => [
-			'props' => [
-				'value' => function ($value = null) {
-					$event = Yaml::decode($value);
-					return [
-						'eventName'  => null,
-						'startDate'  => null,
-						'endDate'    => null,
-						'timeStart'  => null,
-						'timeEnd'    => null,
-						'city'       => null,
-						'state'      => null,
-						'country'    => null,
-						'venue'      => null,
-						'url'        => null,
-						'details'    => null,
-						...$event
-					];
-				},
-				'preview' => function ($value = []) {
-					return is_array($value) ? $value : [];
-				},
-
-				// edit-drawer toggles (independent of preview)
-				'eventName'  => fn ($value = true)  => (bool)$value,
-				'endDate'    => fn ($value = true)  => (bool)$value,
-				'timeStart'  => fn ($value = true)  => (bool)$value,
-				'timeEnd'    => fn ($value = true)  => (bool)$value,
-				'venue'      => fn ($value = true)  => (bool)$value,
-				'url'        => fn ($value = true)  => (bool)$value,
-				'details'    => fn ($value = true)  => (bool)$value,
-				'empty'      => fn ($value = false) => (bool)$value,
-			]
-		]
-	],
-
-	'fieldMethods' => require __DIR__ . '/lib/fieldMethods.php',
-
-	'info' => [
-		'version'  => '6.0.0',
+App::plugin('scottboms/events-field',
+	info: [
 		'homepage' => 'https://github.com/scottboms/kirby-events-field',
 		'license'  => 'MIT',
-		'authors'  => [[ 'name' => 'Scott Boms', 'url' => 'https://scottboms.com' ]],
+		'version'  => '6.0.0',
+		'authors'  => [['name' => 'Scott Boms']],
+	],
+	extends: [
+		'fields' => [
+			'event' => EventField::class,
+		],
+		'fieldMethods' => require __DIR__ . '/lib/fieldMethods.php',
 	]
-]);
+);
