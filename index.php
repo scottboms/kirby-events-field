@@ -58,7 +58,7 @@ Kirby::plugin('scottboms/events-field', [
 	'fieldMethods' => require __DIR__ . '/lib/fieldMethods.php',
 
 	'info' => [
-		'version'  => '1.1.1',
+		'version'  => '1.1.2',
 		'homepage' => 'https://github.com/scottboms/kirby-events-field',
 		'license'  => 'MIT',
 		'authors'  => [[ 'name' => 'Scott Boms', 'url' => 'https://scottboms.com' ]],
